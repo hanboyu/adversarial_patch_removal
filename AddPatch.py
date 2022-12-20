@@ -3,17 +3,21 @@ import torch
 import math
 import numpy as np
 import scipy
+from PIL import Image
 
 import torchvision
 import torchvision.transforms as transformsimport
 import torchvision.transforms as transforms
-from PIL import Image
+
 
 class AddPatch(object):
-    def __init__(self, image_size, patch_size, min_in=0, max_in=0) -> None:
+    def __init__(self, image_size, patch_size, min_in=0, max_in=0, patch_path=None) -> None:
         self.image_size = image_size
         self.patch_size = patch_size
-        self.patch, self.patch_shape = self._init_patch_circle(self.image_size, self.patch_size)
+        if patch_path is None:
+            self.patch, self.patch_shape = self._init_patch_circle(self.image_size, self.patch_size)
+        else:
+            self.patch, self.patch_shape = self._load_patch(patch_path)
 
 
     def __call__(self, sample):
@@ -32,6 +36,16 @@ class AddPatch(object):
         #     new_patch[i][j] = self._submatrix(patch[i][j])
         
         return im
+    
+    def _load_patch(self, path):
+        img = Image.open( path )
+        img.load()
+        patch_length = int(((self.image_size ** 2) * self.patch_size) ** 0.5)
+        img = img.resize((3, patch_length, patch_length))
+        data = np.asarray(img, dtype="float32")
+        data[data > 254] = 0
+        return data, data.shape
+
     
 
     def _init_patch_circle(self, image_size, patch_size):
@@ -117,8 +131,8 @@ def imshow(img, out_path):
 if __name__ == "__main__":
     transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-    AddPatch(32, 0.05)
+    AddPatch(32, 0.15, "./toster_patch.png"),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=2)

@@ -1,1 +1,1 @@
-from configs.configure import Configuration
+# from configs.configure import Configuration

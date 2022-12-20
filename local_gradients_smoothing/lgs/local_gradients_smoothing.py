@@ -3,7 +3,7 @@ import torch
 from torchvision.transforms import ToTensor, Grayscale
 from PIL.Image import Image
 from PIL.ImageOps import grayscale
-from lgs import gradient
+from local_gradients_smoothing.lgs import gradient
 
 
 class LocalGradientsSmoothing:

@@ -23,7 +23,14 @@ class CIFAR10Classifier(LightningModule):
         # for param in self.net.fc.parameters():
         #     param.requires_grad = True
         
-        self.transform = transforms.Compose(
+        self.train_transform = transforms.Compose([
+            transforms.RandomResizedCrop((32, 32), scale=(0.2, 1.0), interpolation=3),  # 3 is bicubic
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+
+        self.val_transform = transforms.Compose(
         [transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
@@ -80,13 +87,13 @@ class CIFAR10Classifier(LightningModule):
 
         # Assign train/val datasets for use in dataloaders
         if stage == "fit" or stage is None:
-            trainset_full = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=self.transform)
+            trainset_full = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=self.train_transform)
             train_set_len = int(len(trainset_full) * 0.7)
             self.train_set, self.val_set = torch.utils.data.random_split(trainset_full, [train_set_len, len(trainset_full) - train_set_len])
 
         # Assign test dataset for use in dataloader(s)
         if stage == "test" or stage is None:
-            self.test_set = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=self.transform)
+            self.test_set = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=self.val_transform)
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(self.train_set, batch_size=self.args.batch_size)
